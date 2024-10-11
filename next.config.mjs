@@ -1,6 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  webpack(config) {
+  webpack(config, { isServer }) {
+    if (!isServer) {
+      // Set a higher limit (adjust as needed)
+      config.module.rules.forEach(rule => {
+        if (rule.use && rule.use.loader === 'babel-loader') {
+          rule.use.options.generatorOpts = { jscOption: { sourceMaps: true, babelrc: false, presets: ['@babel/preset-env'] } };
+        }
+      });
+    }
+
     // Grab the existing rule that handles SVG imports
     const fileLoaderRule = config.module.rules.find((rule) =>
       rule.test?.test?.(".svg")
@@ -13,6 +22,7 @@ const nextConfig = {
         test: /\.svg$/i,
         resourceQuery: /url/, // *.svg?url
       },
+
       // Convert all other *.svg imports to React components
       {
         test: /\.svg$/i,
@@ -25,8 +35,8 @@ const nextConfig = {
     // Modify the file loader rule to ignore *.svg, since we have it handled now.
     fileLoaderRule.exclude = /\.svg$/i;
 
+    // **Crucial Addition:** Ensure this line is present
     return config;
   },
 };
-
 export default nextConfig;
